@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>고객 문의 처리 통계 v3 - 집계 쿼리 기반 개선</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            color: #222;
+        }
+
+        h1 {
+            margin-bottom: 12px;
+        }
+
+        p {
+            margin: 4px 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 24px;
+            min-width: 980px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 10px 14px;
+            text-align: right;
+        }
+
+        th {
+            background: #f5f5f5;
+            font-weight: 700;
+        }
+
+        th:first-child,
+        td:first-child {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<h1>고객 문의 처리 통계 v3 - 집계 쿼리 기반 개선</h1>
+<p>이 화면은 SUM(CASE WHEN ...) 기반 집계 쿼리로 고객 문의 통계를 한 번에 조회한다.</p>
+<p>v1/v2는 최대 64회 COUNT 쿼리를 실행하지만, v3는 집계 쿼리 1회로 동일한 통계 결과를 만든다.</p>
+<p>쿼리 수를 줄이는 대신 SQL이 길어지고, 집계 결과를 화면용 DTO로 조립하는 과정이 필요하다.</p>
+
+<table>
+    <thead>
+    <tr>
+        <th>구분</th>
+        <th th:each="column : ${statTable.columns}" th:text="${column.label}">총계</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="row : ${statTable.rows}">
+        <td th:text="${row.label}">전체</td>
+        <td th:each="column : ${statTable.columns}"
+            th:text="${row.counts[column.key]}">0</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

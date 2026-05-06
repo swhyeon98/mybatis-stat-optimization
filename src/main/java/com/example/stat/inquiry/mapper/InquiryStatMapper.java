@@ -1,10 +1,12 @@
 package com.example.stat.inquiry.mapper;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.example.stat.inquiry.dto.InquiryStatAggregateRow;
 import com.example.stat.inquiry.dto.InquiryStatSearchCondition;
 
 @Mapper
@@ -14,6 +16,10 @@ public interface InquiryStatMapper {
 			@Param("condition") InquiryStatSearchCondition condition,
 			@Param("category") String category,
 			@Param("status") String status
+	);
+
+	List<InquiryStatAggregateRow> selectStatRowsV3(
+			@Param("condition") InquiryStatSearchCondition condition
 	);
 
 	int countAllInquiries();
