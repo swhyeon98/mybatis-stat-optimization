@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.stat.inquiry.mapper.InquiryStatMapper">
+
+    <select id="countStatV1" resultType="int">
+        SELECT COUNT(DISTINCT i.id)
+        FROM customer_inquiry i
+        <where>
+            <if test="condition.startDate != null">
+                AND i.created_at <![CDATA[>=]]> #{condition.startDate}
+            </if>
+            <if test="condition.endDate != null">
+                AND i.created_at <![CDATA[<]]> DATE_ADD(#{condition.endDate}, INTERVAL 1 DAY)
+            </if>
+            <if test="category != null and category != ''">
+                AND i.category = #{category}
+            </if>
+            <choose>
+                <when test='status != null and status.equals("TOTAL")'>
+                </when>
+                <when test='status != null and status.equals("UNRESOLVED")'>
+                    AND i.status <![CDATA[!=]]> 'RESOLVED'
+                </when>
+                <otherwise>
+                    AND i.status = #{status}
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+
+    <select id="countAllInquiries" resultType="int">
+        SELECT COUNT(*)
+        FROM customer_inquiry
+    </select>
+
+    <insert id="insertSampleInquiry">
+        INSERT INTO customer_inquiry (
+            category,
+            channel,
+            priority,
+            status,
+            title,
+            customer_id,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{category},
+            #{channel},
+            #{priority},
+            #{status},
+            #{title},
+            #{customerId},
+            #{createdAt},
+            #{updatedAt}
+        )
+    </insert>
+
+</mapper>

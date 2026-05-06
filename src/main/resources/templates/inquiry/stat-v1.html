@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>고객 문의 처리 통계 v1 - 셀 단위 COUNT 방식</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            color: #222;
+        }
+
+        h1 {
+            margin-bottom: 12px;
+        }
+
+        p {
+            margin: 4px 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 24px;
+            min-width: 980px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 10px 14px;
+            text-align: right;
+        }
+
+        th {
+            background: #f5f5f5;
+            font-weight: 700;
+        }
+
+        th:first-child,
+        td:first-child {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<h1>고객 문의 처리 통계 v1 - 셀 단위 COUNT 방식</h1>
+<p>이 화면은 통계 셀마다 COUNT 쿼리를 개별 실행하는 문제 상황을 재현한다.</p>
+<p>행 8개 × 컬럼 8개 = 최대 64회 COUNT 쿼리가 실행된다. 고객 문의 유형별 처리 상태를 집계하는 관리자 통계 화면을 단순화한 예제다.</p>
+
+<table>
+    <thead>
+    <tr>
+        <th>구분</th>
+        <th>총계</th>
+        <th>접수</th>
+        <th>처리중</th>
+        <th>해결</th>
+        <th>보류</th>
+        <th>재문의</th>
+        <th>이관</th>
+        <th>미처리</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>전체</td>
+        <td th:text="${total_total}">0</td>
+        <td th:text="${total_received}">0</td>
+        <td th:text="${total_inProgress}">0</td>
+        <td th:text="${total_resolved}">0</td>
+        <td th:text="${total_onHold}">0</td>
+        <td th:text="${total_reopened}">0</td>
+        <td th:text="${total_transferred}">0</td>
+        <td th:text="${total_unresolved}">0</td>
+    </tr>
+    <tr>
+        <td>결제/환불</td>
+        <td th:text="${paymentRefund_total}">0</td>
+        <td th:text="${paymentRefund_received}">0</td>
+        <td th:text="${paymentRefund_inProgress}">0</td>
+        <td th:text="${paymentRefund_resolved}">0</td>
+        <td th:text="${paymentRefund_onHold}">0</td>
+        <td th:text="${paymentRefund_reopened}">0</td>
+        <td th:text="${paymentRefund_transferred}">0</td>
+        <td th:text="${paymentRefund_unresolved}">0</td>
+    </tr>
+    <tr>
+        <td>계정/로그인</td>
+        <td th:text="${accountLogin_total}">0</td>
+        <td th:text="${accountLogin_received}">0</td>
+        <td th:text="${accountLogin_inProgress}">0</td>
+        <td th:text="${accountLogin_resolved}">0</td>
+        <td th:text="${accountLogin_onHold}">0</td>
+        <td th:text="${accountLogin_reopened}">0</td>
+        <td th:text="${accountLogin_transferred}">0</td>
+        <td th:text="${accountLogin_unresolved}">0</td>
+    </tr>
+    <tr>
+        <td>배송/예약</td>
+        <td th:text="${deliveryBooking_total}">0</td>
+        <td th:text="${deliveryBooking_received}">0</td>
+        <td th:text="${deliveryBooking_inProgress}">0</td>
+        <td th:text="${deliveryBooking_resolved}">0</td>
+        <td th:text="${deliveryBooking_onHold}">0</td>
+        <td th:text="${deliveryBooking_reopened}">0</td>
+        <td th:text="${deliveryBooking_transferred}">0</td>
+        <td th:text="${deliveryBooking_unresolved}">0</td>
+    </tr>
+    <tr>
+        <td>오류/버그</td>
+        <td th:text="${bugError_total}">0</td>
+        <td th:text="${bugError_received}">0</td>
+        <td th:text="${bugError_inProgress}">0</td>
+        <td th:text="${bugError_resolved}">0</td>
+        <td th:text="${bugError_onHold}">0</td>
+        <td th:text="${bugError_reopened}">0</td>
+        <td th:text="${bugError_transferred}">0</td>
+        <td th:text="${bugError_unresolved}">0</td>
+    </tr>
+    <tr>
+        <td>서비스 이용</td>
+        <td th:text="${serviceUsage_total}">0</td>
+        <td th:text="${serviceUsage_received}">0</td>
+        <td th:text="${serviceUsage_inProgress}">0</td>
+        <td th:text="${serviceUsage_resolved}">0</td>
+        <td th:text="${serviceUsage_onHold}">0</td>
+        <td th:text="${serviceUsage_reopened}">0</td>
+        <td th:text="${serviceUsage_transferred}">0</td>
+        <td th:text="${serviceUsage_unresolved}">0</td>
+    </tr>
+    <tr>
+        <td>제휴/광고</td>
+        <td th:text="${partnership_total}">0</td>
+        <td th:text="${partnership_received}">0</td>
+        <td th:text="${partnership_inProgress}">0</td>
+        <td th:text="${partnership_resolved}">0</td>
+        <td th:text="${partnership_onHold}">0</td>
+        <td th:text="${partnership_reopened}">0</td>
+        <td th:text="${partnership_transferred}">0</td>
+        <td th:text="${partnership_unresolved}">0</td>
+    </tr>
+    <tr>
+        <td>기타</td>
+        <td th:text="${etc_total}">0</td>
+        <td th:text="${etc_received}">0</td>
+        <td th:text="${etc_inProgress}">0</td>
+        <td th:text="${etc_resolved}">0</td>
+        <td th:text="${etc_onHold}">0</td>
+        <td th:text="${etc_reopened}">0</td>
+        <td th:text="${etc_transferred}">0</td>
+        <td th:text="${etc_unresolved}">0</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

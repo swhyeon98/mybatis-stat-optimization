@@ -1,0 +1,20 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: stat-example-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-stat_example}
+      MYSQL_USER: ${DB_USERNAME:-stat_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-stat_pass}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_pass}
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - stat-example-mysql-data:/var/lib/mysql
+
+volumes:
+  stat-example-mysql-data:
