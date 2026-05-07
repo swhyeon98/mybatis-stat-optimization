@@ -36,6 +36,29 @@
         FROM customer_inquiry
     </select>
 
+    <select id="selectStatRowsV3" resultType="com.example.stat.inquiry.dto.InquiryStatAggregateRow">
+        SELECT
+            i.category AS category_code,
+            COUNT(DISTINCT i.id) AS total_count,
+            SUM(CASE WHEN i.status = 'RECEIVED' THEN 1 ELSE 0 END) AS received_count,
+            SUM(CASE WHEN i.status = 'IN_PROGRESS' THEN 1 ELSE 0 END) AS in_progress_count,
+            SUM(CASE WHEN i.status = 'RESOLVED' THEN 1 ELSE 0 END) AS resolved_count,
+            SUM(CASE WHEN i.status = 'ON_HOLD' THEN 1 ELSE 0 END) AS on_hold_count,
+            SUM(CASE WHEN i.status = 'REOPENED' THEN 1 ELSE 0 END) AS reopened_count,
+            SUM(CASE WHEN i.status = 'TRANSFERRED' THEN 1 ELSE 0 END) AS transferred_count,
+            SUM(CASE WHEN i.status <![CDATA[!=]]> 'RESOLVED' THEN 1 ELSE 0 END) AS unresolved_count
+        FROM customer_inquiry i
+        <where>
+            <if test="condition.startDate != null">
+                AND i.created_at <![CDATA[>=]]> #{condition.startDate}
+            </if>
+            <if test="condition.endDate != null">
+                AND i.created_at <![CDATA[<]]> DATE_ADD(#{condition.endDate}, INTERVAL 1 DAY)
+            </if>
+        </where>
+        GROUP BY i.category
+    </select>
+
     <insert id="insertSampleInquiry">
         INSERT INTO customer_inquiry (
             category,

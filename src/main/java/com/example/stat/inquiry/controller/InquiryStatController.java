@@ -99,4 +99,10 @@ public class InquiryStatController {
 		model.addAttribute("statTable", inquiryStatService.getStatTableV2(condition));
 		return "inquiry/stat-v2";
 	}
+
+	@GetMapping("/inquiries/stats/v3")
+	public String statV3(InquiryStatSearchCondition condition, Model model) {
+		model.addAttribute("statTable", inquiryStatService.getStatTableV3(condition));
+		return "inquiry/stat-v3";
+	}
 }
