@@ -1,9 +1,12 @@
 package com.example.stat.global.performance;
 
 import java.io.IOException;
+import java.util.regex.Pattern;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,6 +17,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 public class RequestPerformanceLoggingFilter extends OncePerRequestFilter {
+
+	private static final Pattern STAT_REQUEST_PATTERN =
+			Pattern.compile("^/inquiries/stats/v\\d+$");
+
+	private static final String HEADER_ELAPSED_MS = "X-Perf-Elapsed-Ms";
+	private static final String HEADER_SQL_COUNT = "X-Perf-Sql-Count";
+	private static final String HEADER_SQL_TIME_MS = "X-Perf-Sql-Time-Ms";
+
+	@Value("${app.performance.log-enabled:false}")
+	private boolean logEnabled;
+
+	@Value("${app.performance.response-header-enabled:true}")
+	private boolean responseHeaderEnabled;
 
 	@Override
 	protected void doFilterInternal(
@@ -28,28 +44,48 @@ public class RequestPerformanceLoggingFilter extends OncePerRequestFilter {
 
 		long startNanos = System.nanoTime();
 		SqlPerformanceContext.start();
+
+		ContentCachingResponseWrapper responseWrapper =
+				new ContentCachingResponseWrapper(response);
+
 		try {
-			filterChain.doFilter(request, response);
+			filterChain.doFilter(request, responseWrapper);
 		} finally {
 			long elapsedMs = (System.nanoTime() - startNanos) / 1_000_000;
 			SqlPerformanceSnapshot sql = SqlPerformanceContext.snapshot();
 			SqlPerformanceContext.clear();
 
-			log.info(
-					"[PERF] uri={} elapsedMs={} sqlCount={} sqlTimeMs={} thread={}",
-					request.getRequestURI(),
-					elapsedMs,
-					sql.sqlCount(),
-					sql.sqlTimeMs(),
-					Thread.currentThread().getName()
-			);
+			if (responseHeaderEnabled) {
+				addPerformanceHeaders(responseWrapper, elapsedMs, sql);
+			}
+
+			if (logEnabled) {
+				log.info(
+						"[PERF] uri={} elapsedMs={} sqlCount={} sqlTimeMs={} thread={}",
+						request.getRequestURI(),
+						elapsedMs,
+						sql.sqlCount(),
+						sql.sqlTimeMs(),
+						Thread.currentThread().getName()
+				);
+			}
+
+			responseWrapper.copyBodyToResponse();
 		}
+	}
+
+	private void addPerformanceHeaders(
+			HttpServletResponse response,
+			long elapsedMs,
+			SqlPerformanceSnapshot sql
+	) {
+		response.setHeader(HEADER_ELAPSED_MS, String.valueOf(elapsedMs));
+		response.setHeader(HEADER_SQL_COUNT, String.valueOf(sql.sqlCount()));
+		response.setHeader(HEADER_SQL_TIME_MS, String.valueOf(sql.sqlTimeMs()));
 	}
 
 	private boolean isStatRequest(HttpServletRequest request) {
 		String uri = request.getRequestURI();
-		return "/inquiries/stats/v1".equals(uri)
-				|| "/inquiries/stats/v2".equals(uri)
-				|| "/inquiries/stats/v3".equals(uri);
+		return STAT_REQUEST_PATTERN.matcher(uri).matches();
 	}
 }

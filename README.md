@@ -197,19 +197,22 @@ SAMPLE_DATA_SIZE=100000 ./gradlew bootRun
 SAMPLE_DATA_SIZE=1000000 ./gradlew bootRun
 ```
 
-k6 스크립트는 `performance/k6` 아래에 있습니다.
+k6 스크립트는 `performance/k6/stat.js` 하나로 통합되어 있습니다.
+
+`VERSION`, `VUS`, `DURATION`, `SLEEP`, `BASE_URL` 환경변수로 테스트 대상을 조정합니다.
 
 ```bash
-k6 run performance/k6/stat-v1.js
-k6 run performance/k6/stat-v2.js
-k6 run performance/k6/stat-v3.js
-k6 run performance/k6/stat-compare.js
+VERSION=v1 VUS=1 DURATION=30s SLEEP=1 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
+VERSION=v2 VUS=1 DURATION=30s SLEEP=1 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
+VERSION=v3 VUS=1 DURATION=30s SLEEP=1 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
 ```
 
-`BASE_URL`을 바꿔 다른 서버를 대상으로 실행할 수 있습니다.
+예를 들어 더 강한 부하 조건은 아래처럼 실행할 수 있습니다.
 
 ```bash
-BASE_URL=http://localhost:8080 k6 run performance/k6/stat-compare.js
+VERSION=v1 VUS=50 DURATION=1m SLEEP=0 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
+VERSION=v2 VUS=50 DURATION=1m SLEEP=0 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
+VERSION=v3 VUS=50 DURATION=1m SLEEP=0 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
 ```
 
-DB 실행 계획과 Performance Schema 확인 SQL은 `docs/sql` 아래에 있습니다. 테스트 계획은 `docs/performance-test-plan.md`, 결과 기록 템플릿은 `docs/performance-result-template.md`를 사용합니다.
+DB 실행 계획과 Performance Schema 확인 SQL은 `docs/sql` 아래에 있습니다. 테스트 계획은 `docs/performance-test-plan.md`, 성능 비교 결과는 `docs/performance-comparison.md`에 정리합니다.
