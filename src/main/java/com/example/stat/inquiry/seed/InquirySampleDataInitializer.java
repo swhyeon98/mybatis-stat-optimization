@@ -3,6 +3,7 @@ package com.example.stat.inquiry.seed;
 import java.time.LocalDateTime;
 import java.util.Random;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class InquirySampleDataInitializer implements CommandLineRunner {
 
-	private static final int SAMPLE_SIZE = 3_200;
 	private static final Random RANDOM = new Random(20260506);
 	private static final String[] CHANNELS = {"WEB", "APP", "EMAIL", "PHONE"};
 	private static final String[] PRIORITIES = {"LOW", "NORMAL", "HIGH", "URGENT"};
@@ -33,15 +33,25 @@ public class InquirySampleDataInitializer implements CommandLineRunner {
 
 	private final InquiryStatMapper inquiryStatMapper;
 
+	@Value("${app.sample-data.enabled:true}")
+	private boolean enabled;
+
+	@Value("${app.sample-data.size:3200}")
+	private int sampleSize;
+
 	@Override
 	public void run(String... args) {
+		if (!enabled) {
+			return;
+		}
+
 		if (inquiryStatMapper.countAllInquiries() > 0) {
 			return;
 		}
 
 		LocalDateTime anchorDateTime = LocalDateTime.of(2026, 5, 6, 12, 0);
 
-		for (int i = 0; i < SAMPLE_SIZE; i++) {
+		for (int i = 0; i < sampleSize; i++) {
 			InquiryCategory category = pickCategory();
 			InquiryStatus status = pickStatus(category);
 			LocalDateTime createdAt = randomCreatedAt(anchorDateTime);
