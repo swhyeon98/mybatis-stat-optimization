@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -44,15 +45,18 @@ public class RequestPerformanceLoggingFilter extends OncePerRequestFilter {
 		long startNanos = System.nanoTime();
 		SqlPerformanceContext.start();
 
+		ContentCachingResponseWrapper responseWrapper =
+				new ContentCachingResponseWrapper(response);
+
 		try {
-			filterChain.doFilter(request, response);
+			filterChain.doFilter(request, responseWrapper);
 		} finally {
 			long elapsedMs = (System.nanoTime() - startNanos) / 1_000_000;
 			SqlPerformanceSnapshot sql = SqlPerformanceContext.snapshot();
 			SqlPerformanceContext.clear();
 
 			if (responseHeaderEnabled) {
-				addPerformanceHeaders(response, elapsedMs, sql);
+				addPerformanceHeaders(responseWrapper, elapsedMs, sql);
 			}
 
 			if (logEnabled) {
@@ -65,6 +69,8 @@ public class RequestPerformanceLoggingFilter extends OncePerRequestFilter {
 						Thread.currentThread().getName()
 				);
 			}
+
+			responseWrapper.copyBodyToResponse();
 		}
 	}
 
@@ -73,11 +79,6 @@ public class RequestPerformanceLoggingFilter extends OncePerRequestFilter {
 			long elapsedMs,
 			SqlPerformanceSnapshot sql
 	) {
-		if (response.isCommitted()) {
-			log.debug("Response already committed. Skip performance headers.");
-			return;
-		}
-
 		response.setHeader(HEADER_ELAPSED_MS, String.valueOf(elapsedMs));
 		response.setHeader(HEADER_SQL_COUNT, String.valueOf(sql.sqlCount()));
 		response.setHeader(HEADER_SQL_TIME_MS, String.valueOf(sql.sqlTimeMs()));
