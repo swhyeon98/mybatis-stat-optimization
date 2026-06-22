@@ -1,24 +1,18 @@
 package com.example.stat.inquiry.service;
 
+import com.example.stat.inquiry.dto.*;
+import com.example.stat.inquiry.mapper.InquiryStatMapper;
+import com.example.stat.inquiry.type.InquiryCategory;
+import com.example.stat.inquiry.type.InquiryStatus;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Service;
-
-import com.example.stat.inquiry.dto.InquiryStatAggregateRow;
-import com.example.stat.inquiry.dto.InquiryStatColumn;
-import com.example.stat.inquiry.dto.InquiryStatRow;
-import com.example.stat.inquiry.dto.InquiryStatSearchCondition;
-import com.example.stat.inquiry.dto.InquiryStatTable;
-import com.example.stat.inquiry.mapper.InquiryStatMapper;
-import com.example.stat.inquiry.type.InquiryCategory;
-import com.example.stat.inquiry.type.InquiryStatus;
-
-import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
