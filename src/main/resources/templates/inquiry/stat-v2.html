@@ -2,7 +2,7 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>고객 문의 처리 통계 v2 - 반복문 기반 리팩토링</title>
+    <title>고객 문의 처리 통계 v2 - 행 단위 집계 방식</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -43,10 +43,10 @@
     </style>
 </head>
 <body>
-<h1>고객 문의 처리 통계 v2 - 반복문 기반 리팩토링</h1>
-<p>이 화면은 v1과 동일하게 통계 셀마다 COUNT 쿼리를 개별 실행한다.</p>
-<p>다만 Controller의 반복적인 model.addAttribute 호출을 제거하고, 통계 행과 열을 목록 기반으로 관리하도록 개선했다.</p>
-<p>행 8개 × 컬럼 8개 = 최대 64회 COUNT 쿼리가 실행된다.</p>
+<h1>고객 문의 처리 통계 v2 - 행 단위 집계 방식</h1>
+<p>이 화면은 통계표의 한 행을 하나의 집계 단위로 보고, 행마다 1개의 집계 쿼리를 실행한다.</p>
+<p>한 행에서 총계, 접수, 처리중, 해결, 보류, 재문의, 이관, 미처리 값을 한 번에 조회한다.</p>
+<p>행 8개 = 최대 8회 SQL이 실행된다.</p>
 
 <table>
     <thead>

@@ -1,6 +1,3 @@
--- v3 aggregate query.
--- The application builds the "전체" row in Java by summing category rows.
-
 EXPLAIN ANALYZE
 SELECT
     i.category AS category_code,
@@ -11,6 +8,6 @@ SELECT
     SUM(CASE WHEN i.status = 'ON_HOLD' THEN 1 ELSE 0 END) AS on_hold_count,
     SUM(CASE WHEN i.status = 'REOPENED' THEN 1 ELSE 0 END) AS reopened_count,
     SUM(CASE WHEN i.status = 'TRANSFERRED' THEN 1 ELSE 0 END) AS transferred_count,
-    SUM(CASE WHEN i.status != 'RESOLVED' THEN 1 ELSE 0 END) AS unresolved_count
+    SUM(CASE WHEN i.status IS NULL OR i.status != 'RESOLVED' THEN 1 ELSE 0 END) AS unresolved_count
 FROM customer_inquiry i
 GROUP BY i.category;

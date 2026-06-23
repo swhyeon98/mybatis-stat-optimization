@@ -2,7 +2,7 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>고객 문의 처리 통계 v3 - 집계 쿼리 기반 개선</title>
+    <title>고객 문의 처리 통계 v3 - 전체 단일 집계 쿼리 방식</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -43,10 +43,10 @@
     </style>
 </head>
 <body>
-<h1>고객 문의 처리 통계 v3 - 집계 쿼리 기반 개선</h1>
+<h1>고객 문의 처리 통계 v3 - 전체 단일 집계 쿼리 방식</h1>
 <p>이 화면은 SUM(CASE WHEN ...) 기반 집계 쿼리로 고객 문의 통계를 한 번에 조회한다.</p>
-<p>v1/v2는 최대 64회 COUNT 쿼리를 실행하지만, v3는 집계 쿼리 1회로 동일한 통계 결과를 만든다.</p>
-<p>쿼리 수를 줄이는 대신 SQL이 길어지고, 집계 결과를 화면용 DTO로 조립하는 과정이 필요하다.</p>
+<p>v1은 최대 64회, v2는 최대 8회 SQL을 실행하지만, v3는 집계 쿼리 1회로 동일한 통계 결과를 만든다.</p>
+<p>개인 프로젝트에서 추가로 검증한 방식이며, 쿼리 수를 줄이는 대신 SQL이 길어지고 화면용 DTO 조립 과정이 필요하다.</p>
 
 <table>
     <thead>
