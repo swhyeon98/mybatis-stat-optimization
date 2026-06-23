@@ -8,8 +8,8 @@ const VUS = Number(__ENV.VUS || 1);
 const DURATION = __ENV.DURATION || '30s';
 const SLEEP = Number(__ENV.SLEEP ?? 1);
 
-if (!/^v\d+$/.test(VERSION)) {
-    throw new Error(`Invalid VERSION: ${VERSION}. Expected format: v1, v2, v3, ...`);
+if (!/^v[123]$/.test(VERSION)) {
+    throw new Error(`Invalid VERSION: ${VERSION}. Expected one of v1, v2, v3.`);
 }
 
 const appElapsedMs = new Trend('app_elapsed_ms');

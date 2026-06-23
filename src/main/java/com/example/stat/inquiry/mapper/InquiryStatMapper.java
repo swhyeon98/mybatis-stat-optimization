@@ -18,6 +18,11 @@ public interface InquiryStatMapper {
 			@Param("status") String status
 	);
 
+	InquiryStatAggregateRow selectStatRowV2(
+			@Param("condition") InquiryStatSearchCondition condition,
+			@Param("category") String category
+	);
+
 	List<InquiryStatAggregateRow> selectStatRowsV3(
 			@Param("condition") InquiryStatSearchCondition condition
 	);
