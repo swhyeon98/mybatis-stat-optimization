@@ -1,61 +1,76 @@
-# Performance Test Plan
+# 성능 테스트 계획
 
-## 테스트 목적
+## 1. 테스트 목적
 
-v1, v2, v3의 응답 시간과 SQL 실행 구조를 비교한다. 목적은 v3가 항상 더 빠르다는 결론을 증명하는 것이 아니라, 통계 처리 방식별 트레이드오프를 관찰하는 것이다.
+고객 문의 통계 페이지 예제를 기준으로 통계 조회 방식에 따른 성능 차이를 비교한다.
 
-비교할 핵심 관점은 다음과 같다.
+비교 대상은 다음 세 가지 방식이다.
 
-- v1은 셀 단위 COUNT 방식이므로 쿼리 수와 DB round-trip이 통계 셀 수에 비례한다.
-- v2는 통계표의 행을 집계 단위로 보며, 8개 행 기준 최대 8회 SQL을 실행한다.
-- v2는 실무에서 적용했던 개선 방식과 가장 유사한 버전이다.
-- v3는 전체 통계표를 1회 집계 쿼리로 조회하지만, SQL 복잡도가 증가한다.
-- 데이터 수, 동시 요청 수, 인덱스 구성, 통계 조건에 따라 결과가 달라질 수 있다.
+* v1: 셀 단위 COUNT 방식
+* v2: 행 단위 집계 방식
+* v3: 전체 단일 집계 쿼리 방식
 
-## 비교 대상
+성능 테스트에서는 각 방식의 요청당 SQL 실행 수, 서버 처리 시간, SQL 총 실행 시간, 동시 요청 상황에서의 지연 변화를 확인한다.
 
-| 버전 | 방식 | 예상 SQL 실행 수 |
-|---|---|---:|
-| v1 | 셀 단위 COUNT 방식 | 최대 64회 |
-| v2 | 행 단위 집계 방식 | 최대 8회 |
-| v3 | 전체 단일 집계 쿼리 방식 | 1회 |
+## 2. 비교 대상
 
-## 데이터 크기별 테스트 계획
+| 버전 | 방식             | 요청당 SQL 실행 수 | 설명                                                 |
+| -- | -------------- | -----------: | -------------------------------------------------- |
+| v1 | 셀 단위 COUNT 방식  |          64회 | 8행 × 8개 수치 컬럼을 셀마다 개별 COUNT 쿼리로 조회                 |
+| v2 | 행 단위 집계 방식     |           8회 | 한 행의 모든 수치를 한 번의 집계 쿼리로 조회                         |
+| v3 | 전체 단일 집계 쿼리 방식 |           1회 | 전체 통계표를 `SUM(CASE WHEN ...)` + `GROUP BY`로 한 번에 조회 |
 
-| 데이터 수 | 실행 예 |
-|---:|---|
-| 3,200 | 기본값 |
-| 100,000 | `SAMPLE_DATA_SIZE=100000 ./gradlew bootRun` |
-| 1,000,000 | `SAMPLE_DATA_SIZE=1000000 ./gradlew bootRun` |
+## 3. 테스트 대상 URL
 
-데이터 크기를 바꿔 다시 생성하려면 기존 `customer_inquiry` 데이터를 비우거나 DB 볼륨을 초기화한다.
+| 버전 | URL                   |
+| -- | --------------------- |
+| v1 | `/inquiries/stats/v1` |
+| v2 | `/inquiries/stats/v2` |
+| v3 | `/inquiries/stats/v3` |
 
-## 동시 요청 수별 테스트 계획
+## 4. 테스트 데이터 조건
 
-| 동시 사용자 | 목적 |
-|---:|---|
-| 1명 | 단일 요청 기준 성능 확인 |
-| 10명 | 일반적인 병렬 요청 상황 확인 |
-| 30명 | 커넥션 풀 대기와 응답 시간 증가 확인 |
+|    데이터 수 | 목적                           |
+| -------: | ---------------------------- |
+|   3,200건 | 기본 데이터 규모에서 v1, v2, v3 차이 확인 |
+| 100,000건 | 데이터 증가 상황에서 v1, v2, v3 차이 확인 |
 
-## 측정 항목
+각 테스트는 동일한 데이터 조건에서 v1, v2, v3를 순서대로 측정한다.
 
-- 평균 응답 시간
-- p95 응답 시간
-- SQL 실행 횟수
-- SQL 총 실행 시간
-- HikariCP active/idle/pending/max
-- DB rows examined
+## 5. 부하 조건
 
-## 테스트 전 주의사항
+|   데이터 수 | VUS | Duration | Sleep | 목적                           |
+| ------: | --: | -------- | ----- | ---------------------------- |
+|   3,200 |   1 | 30s      | 1s    | 단일 사용자 기준 응답 시간 확인           |
+|   3,200 |  30 | 60s      | 0.5s  | 동시 요청 상황에서 응답 시간 확인          |
+| 100,000 |   1 | 30s      | 1s    | 데이터 증가 시 단일 사용자 기준 응답 시간 확인  |
+| 100,000 |  30 | 60s      | 0.5s  | 데이터 증가 + 동시 요청 상황에서 응답 시간 확인 |
 
-- 첫 요청은 warm-up으로 제외한다.
-- 같은 조건에서 여러 번 반복 측정한다.
-- 로컬 PC 상태에 따라 결과가 달라질 수 있다.
-- 절대적인 숫자보다 v1/v2/v3의 상대 비교가 중요하다.
-- v2 구현 방식이 행 단위 집계로 변경되었으므로, 기존 v2 측정 결과는 재측정이 필요하다.
+## 6. 측정 지표
 
-## 실행 예
+| 지표                 | 설명                     |
+| ------------------ | ---------------------- |
+| 완료 요청 수            | 테스트 동안 정상 완료된 요청 수     |
+| 요청당 SQL 수          | 페이지 1회 조회 시 실행된 SQL 수  |
+| 총 SQL 수            | 완료 요청 수 × 요청당 SQL 수    |
+| 서버 평균(ms)          | 애플리케이션 내부 처리 시간 평균     |
+| 서버 p95(ms)         | 애플리케이션 내부 처리 시간 p95    |
+| SQL 평균(ms)         | 요청 1회당 SQL 총 실행 시간 평균  |
+| SQL p95(ms)        | 요청 1회당 SQL 총 실행 시간 p95 |
+| Hikari pending max | 커넥션 풀 대기 요청 수의 최댓값     |
+| 실패율                | 실패한 HTTP 요청 비율         |
+
+## 7. 측정 전 확인 사항
+
+* v1, v2, v3의 통계 결과가 동일한지 확인한다.
+* 동일한 데이터 수 조건에서 각 버전을 측정한다.
+* 테스트 전 애플리케이션과 DB 상태를 가능한 한 동일하게 맞춘다.
+* k6 스크립트의 `VERSION`, `VUS`, `DURATION`, `SLEEP`, `BASE_URL` 값이 의도한 조건과 일치하는지 확인한다.
+* Actuator에서 HikariCP metric이 조회되는지 확인한다.
+
+## 8. 측정 명령
+
+### 8.1 3,200건 / VUS 1
 
 ```bash
 VERSION=v1 VUS=1 DURATION=30s SLEEP=1 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
@@ -63,13 +78,40 @@ VERSION=v2 VUS=1 DURATION=30s SLEEP=1 BASE_URL=http://localhost:8080 k6 run perf
 VERSION=v3 VUS=1 DURATION=30s SLEEP=1 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
 ```
 
-## 추가 비교 후보
+### 8.2 3,200건 / VUS 30
 
-이번 프로젝트에는 구현하지 않지만, 실제 통계 화면에서는 다음 방식도 비교 대상이 될 수 있다.
+```bash
+VERSION=v1 VUS=30 DURATION=60s SLEEP=0.5 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
+VERSION=v2 VUS=30 DURATION=60s SLEEP=0.5 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
+VERSION=v3 VUS=30 DURATION=60s SLEEP=0.5 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
+```
 
-| 방식 | 검토 포인트 |
-|---|---|
-| `GROUP BY category, status` 후 Java 피벗 | SQL 단순성, 동적 상태/분류 대응, Java 조립 비용 |
-| 목적별 다중 집계 쿼리 | 단일 거대 SQL 대신 2~5개 집계 쿼리로 나눌 때의 유지보수성 |
-| 요약 테이블 / 배치 집계 | 조회 성능, 실시간성, 정합성, 배치 관리 비용 |
-| 캐싱 | 반복 조회 감소 효과, 캐시 무효화, 최신성 |
+### 8.3 100,000건 / VUS 1
+
+```bash
+VERSION=v1 VUS=1 DURATION=30s SLEEP=1 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
+VERSION=v2 VUS=1 DURATION=30s SLEEP=1 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
+VERSION=v3 VUS=1 DURATION=30s SLEEP=1 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
+```
+
+### 8.4 100,000건 / VUS 30
+
+```bash
+VERSION=v1 VUS=30 DURATION=60s SLEEP=0.5 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
+VERSION=v2 VUS=30 DURATION=60s SLEEP=0.5 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
+VERSION=v3 VUS=30 DURATION=60s SLEEP=0.5 BASE_URL=http://localhost:8080 k6 run performance/k6/stat.js
+```
+
+## 9. HikariCP metric 확인
+
+테스트 중 또는 테스트 직후 HikariCP pending connection 값을 확인한다.
+
+```bash
+curl http://localhost:8080/actuator/metrics/hikaricp.connections.pending
+```
+
+필요하면 active connection도 함께 확인한다.
+
+```bash
+curl http://localhost:8080/actuator/metrics/hikaricp.connections.active
+```

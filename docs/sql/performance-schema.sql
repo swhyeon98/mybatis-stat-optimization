@@ -1,6 +1,3 @@
--- MySQL performance_schema examples for checking statement execution count and time.
--- Timer values are stored in picoseconds. Divide by 1,000,000,000 to read milliseconds.
-
 SELECT
     DIGEST_TEXT,
     COUNT_STAR,
@@ -12,6 +9,3 @@ FROM performance_schema.events_statements_summary_by_digest
 WHERE DIGEST_TEXT LIKE '%customer_inquiry%'
 ORDER BY SUM_TIMER_WAIT DESC
 LIMIT 20;
-
--- Optional reset before a new run.
--- TRUNCATE TABLE performance_schema.events_statements_summary_by_digest;
